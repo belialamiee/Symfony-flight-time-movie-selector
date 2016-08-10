@@ -1,0 +1,19 @@
+{
+  "name": "Rockwell/translation-import",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Ben Pratt",
+      "email": "bpratt@rockinfo.com.au"
+    }
+  ],
+  "require": {
+    "symfony/console": "dev-master"
+  },
+  "autoload": {
+    "psr-4": {
+      "app\\": ["app/"]
+    }
+  }
+}
