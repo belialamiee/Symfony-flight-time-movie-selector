@@ -14,6 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class SelectMovies extends Command
 {
 
+    private $options = "";
     //sets up the command with an option
     protected function configure()
     {
@@ -29,6 +30,7 @@ class SelectMovies extends Command
     //execute symfony console command.
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->options = json_decode(file_get_contents('/var/www/theRightFit/app/movies.json'));
         $results = "";
         $flightLength = $input->getArgument('flightLength');
         if ($flightLength) {
@@ -53,14 +55,12 @@ class SelectMovies extends Command
     {
         $movieToAdd = null;
         $minimumMovieTime = 400;
-        //fill the slot with the largest movie that will fit the timeslot
-        $options = json_decode(file_get_contents('/var/www/theRightFit/app/movies.json'));
-        foreach($options as $movie){
+        //fill the slot with the largest movie that will fit the timeslot that has not already been added
+        foreach($this->options as $movie){
             if ($movie->runtime > $runningTime && $movie->runtime < $flightLength && !in_array($movie,$movies)) {
                 $runningTime = $movie->runtime;
                 $movieToAdd = $movie;
             }
-
             if ($movie->runtime < $minimumMovieTime && $movie->runtime > 0) {
                 $minimumMovieTime = $movie->runtime;
             }
