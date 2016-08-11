@@ -13,24 +13,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class SelectMovies extends Command
 {
-    /**
-     * @var int
-     */
-    private $movieOptions = [
-        ["name" => "Batman", "length" => 125],
-        ["name" => "Suicide Squad", "length" => 132],
-        ["name" => "Austin Powers", "length" => 75],
-        ["name" => "Oceans Eleven", "length" => 46],
-        ["name" => "Kill Bill", "length" => 175],
-        ["name" => "The Seven Samurai", "length" => 133],
-        ["name" => "Dr Strangelove", "length" => 118],
-        ["name" => "The Big Lebowski", "length" => 196],
-        ["name" => "Gone With The Wind", "length" => 154],
-        ["name" => "Absolutely Fabulous", "length" => 122],
-        ["name" => "Rocky", "length" => 87],
-        ["name" => "Rambo", "length" => 125]
-    ];
-
 
     //sets up the command with an option
     protected function configure()
@@ -44,18 +26,18 @@ class SelectMovies extends Command
             );
     }
 
-    //runs the command to go through and add definitions and translations to the database.
+    //execute symfony console command.
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $bestMatch = [];
+        $results = "";
         $flightLength = $input->getArgument('flightLength');
         if ($flightLength) {
             //ensure we have a number as a flight time
             if (is_numeric($flightLength)) {
-
                 $bestMatch = $this->findBestMatch($flightLength);
-                $bestMatch = implode(", ", $bestMatch);
-
+                foreach($bestMatch as $match){
+                    $results .=  $match->title ." ".$match->runtime. " ";
+                }
             } else {
                 $output->writeln('<comment>Flight time should be a number.</comment>');
             }
@@ -63,7 +45,7 @@ class SelectMovies extends Command
             $output->writeln('<comment>No flight time was provided.</comment>');
 
         }
-        $output->writeln('<info> Your movies should be ' . $bestMatch . '</info>');
+        $output->writeln('<info> Your movies should be ' . $results. '</info>');
     }
 
 
@@ -72,20 +54,21 @@ class SelectMovies extends Command
         $movieToAdd = null;
         $minimumMovieTime = 400;
         //fill the slot with the largest movie that will fit the timeslot
-        foreach ($this->movieOptions as $movie) {
-            if ($movie['length'] > $runningTime && $movie['length'] < $flightLength) {
-                $runningTime = $movie['length'];
-                $movieToAdd = $movie['name'] . " " . $runningTime . "mins";
+        $options = json_decode(file_get_contents('/var/www/theRightFit/app/movies.json'));
+        foreach($options as $movie){
+            if ($movie->runtime > $runningTime && $movie->runtime < $flightLength && !in_array($movie,$movies)) {
+                $runningTime = $movie->runtime;
+                $movieToAdd = $movie;
             }
-            if ($movie['length'] < $minimumMovieTime) {
-                $minimumMovieTime = $movie['length'];
+
+            if ($movie->runtime < $minimumMovieTime && $movie->runtime > 0) {
+                $minimumMovieTime = $movie->runtime;
             }
         }
 
         if ($movieToAdd) {
             $movies[] = $movieToAdd;
         }
-        //if we have enough time for another movie then recursively call this function
         if (($flightLength - $runningTime) > $minimumMovieTime) {
             return $this->findBestMatch($flightLength - $runningTime, $movies);
         } else {
